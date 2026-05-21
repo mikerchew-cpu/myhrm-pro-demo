@@ -213,6 +213,20 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 .ot-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
 .ot-row:last-child{border-bottom:none;}
 
+/* ── Login UI ─────────────────────────────────────── */
+.login-shell{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(145deg,#0C447C 0%,#185FA5 45%,#0F6E56 100%);} 
+.login-card{width:min(920px,100%);background:#fff;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.2);box-shadow:0 24px 55px rgba(12,68,124,.28);display:grid;grid-template-columns:1.1fr 1fr;}
+.login-hero{padding:30px;background:var(--navy);color:#fff;display:flex;flex-direction:column;justify-content:space-between;gap:18px;}
+.login-form{padding:26px;background:var(--surface);} 
+.login-title{font-size:24px;font-weight:700;margin-bottom:6px;}
+.login-sub{font-size:13px;opacity:.85;line-height:1.6;}
+.login-chip{font-size:11px;padding:4px 9px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:16px;display:inline-flex;align-items:center;gap:5px;}
+.login-list{display:grid;gap:8px;font-size:12px;opacity:.9;}
+.login-list div{display:flex;align-items:center;gap:7px;}
+.login-error{font-size:11px;color:var(--red);margin-top:8px;min-height:14px;}
+.hidden{display:none !important;}
+@media (max-width:880px){.login-card{grid-template-columns:1fr;}.login-hero{display:none;}}
+
 /* ── Animations ──────────────────────────────────── */
 .view{animation:fadeIn .18s ease;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
@@ -227,7 +241,9 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
 <h1 class="sr-only">MyHRM Pro — Malaysia HR Management Application</h1>
 
-<div class="shell">
+<div id="login-root"></div>
+
+<div class="shell hidden" id="app-shell">
   <!-- ── SIDEBAR ── -->
   <nav class="sidebar">
     <div class="sb-brand">
@@ -257,6 +273,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     <div class="sb-item" onclick="nav('matrix',this)"><i class="ti ti-table" aria-hidden="true"></i> Approval Matrix</div>
 
     <div class="sb-sec">HR Tools</div>
+    <div class="sb-item" onclick="nav('hradmin',this)"><i class="ti ti-settings" aria-hidden="true"></i> HR Admin</div>
     <div class="sb-item" onclick="nav('performance',this)"><i class="ti ti-chart-arrows" aria-hidden="true"></i> Performance</div>
     <div class="sb-item" onclick="nav('talent',this)"><i class="ti ti-star" aria-hidden="true"></i> Talent Matrix</div>
     <div class="sb-item" onclick="nav('foreign',this)"><i class="ti ti-world" aria-hidden="true"></i> Foreign Workers</div>
@@ -281,7 +298,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
       <div class="tb-pill success"><i class="ti ti-shield-check" aria-hidden="true"></i> EA 1955 Compliant</div>
       <div class="tb-sep"></div>
       <div class="tb-pill"><i class="ti ti-bell" aria-hidden="true"></i> 3</div>
-      <div class="tb-av" title="Ahmad Hafiz — HR Manager">AH</div>
+      <button class="btn btn-sm" onclick="logout()"><i class="ti ti-logout"></i> Logout</button><div class="tb-av" title="Signed-in user" id="tb-user">NA</div>
     </div>
 
     <div class="content" id="content">
@@ -301,7 +318,7 @@ const titles = {
   claims:'Field Claims Management', mileage:'Mileage Tracker',
   approvals:'Approval Workflow — Manager Inbox', matrix:'Approval Matrix',
   performance:'Performance Dashboard — Q2 2026', talent:'9-Box Talent Matrix',
-  foreign:'Foreign Worker Management', levy:'Levy Calculator'
+  foreign:'Foreign Worker Management', levy:'Levy Calculator', hradmin:'HR Admin Module'
 };
 
 /* ─────────────────────────────────────────
@@ -747,12 +764,71 @@ levy: () => `
 
 /* ── STUB VIEWS ─────────────────────────── */
 employees: () => `
-<div class="callout callout-blue mb14"><i class="ti ti-info-circle" aria-hidden="true"></i> Employee directory — 142 active staff across 7 departments. Click any employee to view full profile, statutory IDs, leave balance, OT history, and claims.</div>
-<div class="card">
-  <div class="card-hdr"><span class="card-title"><i class="ti ti-users" aria-hidden="true"></i> All employees</span><div style="display:flex;gap:8px"><input class="form-input" style="width:180px" placeholder="Search name or ID..."><select class="form-input" style="width:140px"><option>All departments</option><option>Field Services</option><option>Sales</option><option>Admin</option></select><button class="btn btn-primary btn-sm"><i class="ti ti-plus" aria-hidden="true"></i> New employee</button></div></div>
-  ${[['FH','#9FE1CB','#085041','Faizal Hashim','Field Tech','Field Services','Permanent','Active'],['JT','#B5D4F4','#0C447C','Jason Tan','Service Engineer','Tech Support','Permanent','Active'],['NZ','#EEEDFE','#3C3489','Nurul Zahira','CS Specialist','Cust. Success','Permanent','Active'],['RA','#C0DD97','#27500A','Rashid Abdullah','Field Tech','Field Services','Contract','Active'],['RK','#F4C0D1','#72243E','Ramu a/l Krishnan','Support Exec','Tech Support','EP Cat III','Active']].map(([av,bg,tc,name,role,dept,type,status])=>`
-  <div class="row"><div class="row-av" style="background:${bg};color:${tc}">${av}</div><div style="flex:1"><div class="row-name">${name}</div><div class="row-sub">${role} · ${dept}</div></div><span class="badge badge-info">${type}</span><span class="badge badge-appr" style="margin-left:6px">${status}</span><button class="btn btn-sm" style="margin-left:10px">View</button></div>`).join('')}
-  <div style="text-align:center;padding:12px;font-size:12px;color:var(--muted)">Showing 5 of 142 employees · <a href="#" style="color:var(--blue)">View all</a></div>
+<div class="callout callout-blue mb14"><i class="ti ti-info-circle" aria-hidden="true"></i> Employee directory with browser storage. Add staff, filter by department, and search by name, role, or employee ID.</div>
+<div class="g2">
+  <div class="card">
+    <div class="card-hdr"><span class="card-title"><i class="ti ti-plus" aria-hidden="true"></i> New employee</span></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Employee ID</label><input id="emp-id" class="form-input" placeholder="E143"></div>
+      <div class="form-group"><label class="form-label">Full name</label><input id="emp-name" class="form-input" placeholder="Aisyah Rahman"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Role</label><input id="emp-role" class="form-input" placeholder="HR Executive"></div>
+      <div class="form-group"><label class="form-label">Department</label><select id="emp-dept" class="form-input"><option>HR</option><option>Field Services</option><option>Tech Support</option><option>Finance</option><option>Sales</option><option>Admin</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Employment type</label><select id="emp-type" class="form-input"><option>Permanent</option><option>Contract</option><option>EP Cat III</option><option>Intern</option></select></div>
+      <div class="form-group"><label class="form-label">Status</label><select id="emp-status" class="form-input"><option>Active</option><option>On Leave</option><option>Probation</option></select></div>
+    </div>
+    <button class="btn btn-primary" onclick="addEmployee()" style="width:100%"><i class="ti ti-device-floppy"></i> Save employee</button>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><span class="card-title"><i class="ti ti-filter" aria-hidden="true"></i> Search & filter</span></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Search</label><input id="emp-search" class="form-input" placeholder="Name, ID, role..." oninput="renderEmployees()"></div>
+    <div class="form-group"><label class="form-label">Department</label><select id="emp-filter-dept" class="form-input" onchange="renderEmployees()"><option value="All">All departments</option><option>HR</option><option>Field Services</option><option>Tech Support</option><option>Finance</option><option>Sales</option><option>Admin</option></select></div>
+    <div class="callout callout-teal" style="margin-top:12px;margin-bottom:0"><i class="ti ti-database"></i> Data is saved in localStorage, so this behaves like a simple web app even after refresh.</div>
+  </div>
+</div>
+<div class="card" style="margin-top:14px">
+  <div class="card-hdr"><span class="card-title"><i class="ti ti-users" aria-hidden="true"></i> Employee roster</span><span id="emp-count" class="badge badge-info">0 employees</span></div>
+  <div id="emp-list"></div>
+</div>`,
+
+
+hradmin: () => `
+<div class="callout callout-teal mb14"><i class="ti ti-settings" aria-hidden="true"></i> HR Admin module centralizes users, roles, module access, and audit actions for MyHRM Pro.</div>
+<div class="g4 mb14">
+  <div class="metric"><div class="metric-lbl"><i class="ti ti-users-group"></i> Active admin users</div><div class="metric-val">12</div><div class="metric-sub">2 super admins · 10 managers</div></div>
+  <div class="metric"><div class="metric-lbl"><i class="ti ti-shield-lock"></i> MFA coverage</div><div class="metric-val" style="color:var(--green)">100%</div><div class="metric-sub">All admin accounts</div></div>
+  <div class="metric"><div class="metric-lbl"><i class="ti ti-key"></i> Pending access requests</div><div class="metric-val" style="color:var(--amber)">4</div><div class="metric-sub">Awaiting approval</div></div>
+  <div class="metric"><div class="metric-lbl"><i class="ti ti-clipboard-list"></i> Audit events (7d)</div><div class="metric-val">86</div><div class="metric-sub">0 critical anomalies</div></div>
+</div>
+<div class="g2">
+  <div class="card">
+    <div class="card-hdr"><span class="card-title"><i class="ti ti-user-cog"></i> Admin users</span><button class="btn btn-sm btn-primary">+ Add admin</button></div>
+    ${[['Nadia Hassan','HR Admin','Super Admin','Active'],['Ahmad Hafiz','HR Manager','Payroll + Employee','Active'],['Mei Ling','Finance Manager','Payroll Approver','Active'],['Jason Tan','Support Lead','Read-only Ops','Suspended']].map(([name,title,role,status])=>`
+    <div class="row"><div class="row-av" style="background:var(--blue-lt);color:var(--blue)">${name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div style="flex:1"><div class="row-name">${name}</div><div class="row-sub">${title} · ${role}</div></div><span class="badge ${status==='Active'?'badge-appr':'badge-pend'}">${status}</span><button class="btn btn-sm" style="margin-left:10px">Edit</button></div>`).join('')}
+  </div>
+  <div class="card">
+    <div class="card-hdr"><span class="card-title"><i class="ti ti-lock-access"></i> Role access matrix</span></div>
+    <table class="matrix-table">
+      <thead><tr><th>Module</th><th>Super Admin</th><th>HR Manager</th><th>Employee</th></tr></thead>
+      <tbody>
+        <tr><td>Employees</td><td class="ck">✓</td><td class="ck">✓</td><td>View own</td></tr>
+        <tr><td>Payroll</td><td class="ck">✓</td><td class="ck">✓</td><td>View payslip</td></tr>
+        <tr><td>Claims</td><td class="ck">✓</td><td class="ck">✓</td><td>Create only</td></tr>
+        <tr><td>Approvals</td><td class="ck">✓</td><td class="ck">✓</td><td>—</td></tr>
+        <tr><td>HR Admin</td><td class="ck">✓</td><td>Limited</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px;display:flex;gap:8px"><button class="btn btn-sm">Export policy</button><button class="btn btn-sm btn-teal">Run access review</button></div>
+  </div>
+</div>
+<div class="card" style="margin-top:14px">
+  <div class="card-hdr"><span class="card-title"><i class="ti ti-history"></i> Recent admin audit trail</span><span class="badge badge-info">Last 24 hours</span></div>
+  <div class="row"><div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div><div style="flex:1"><div class="row-name">Role updated: Payroll Approver</div><div class="row-sub">By Nadia Hassan · 09:12</div></div><span class="badge badge-appr">Success</span></div>
+  <div class="row"><div style="width:8px;height:8px;border-radius:50%;background:var(--amber)"></div><div style="flex:1"><div class="row-name">Failed login attempt blocked</div><div class="row-sub">employee@myhrm.pro · 08:03</div></div><span class="badge badge-pend">Blocked</span></div>
+  <div class="row"><div style="width:8px;height:8px;border-radius:50%;background:var(--blue)"></div><div style="flex:1"><div class="row-name">New admin invited</div><div class="row-sub">farah.hr@myhrm.pro · 07:41</div></div><span class="badge badge-info">Pending</span></div>
 </div>`,
 
 payroll: () => `
@@ -787,6 +863,7 @@ function nav(id, el) {
   if(id==='overtime') setTimeout(calcOT,50);
   if(id==='claims') setTimeout(calcClaim,50);
   if(id==='levy') setTimeout(calcLevy,50);
+  if(id==='employees') setTimeout(renderEmployees,50);
 }
 
 /* ─────────────────────────────────────────
@@ -843,10 +920,89 @@ function rejectRow(i) {
   if(last) last.innerHTML='<span class="badge badge-reje"><i class="ti ti-x"></i> Rejected</span>';
 }
 
+
+const defaultEmployees = [
+  {id:'E138',name:'Faizal Hashim',role:'Field Tech',dept:'Field Services',type:'Permanent',status:'Active'},
+  {id:'E139',name:'Jason Tan',role:'Service Engineer',dept:'Tech Support',type:'Permanent',status:'Active'},
+  {id:'E140',name:'Nurul Zahira',role:'CS Specialist',dept:'Sales',type:'Permanent',status:'Active'},
+  {id:'E141',name:'Rashid Abdullah',role:'Field Tech',dept:'Field Services',type:'Contract',status:'Active'},
+  {id:'E142',name:'Ramu a/l Krishnan',role:'Support Exec',dept:'Tech Support',type:'EP Cat III',status:'Probation'}
+];
+function getEmployees(){
+  try { return JSON.parse(localStorage.getItem('myhrm_employees')) || [...defaultEmployees]; }
+  catch { return [...defaultEmployees]; }
+}
+function saveEmployees(list){ localStorage.setItem('myhrm_employees', JSON.stringify(list)); }
+function initials(name){ return name.split(/\s+/).slice(0,2).map(v=>v[0]||'').join('').toUpperCase(); }
+function renderEmployees(){
+  const listEl = document.getElementById('emp-list');
+  if(!listEl) return;
+  const q = (document.getElementById('emp-search')?.value||'').toLowerCase();
+  const dept = document.getElementById('emp-filter-dept')?.value || 'All';
+  const filtered = getEmployees().filter(e => (dept==='All' || e.dept===dept) && `${e.id} ${e.name} ${e.role}`.toLowerCase().includes(q));
+  document.getElementById('emp-count').textContent = `${filtered.length} employees`;
+  listEl.innerHTML = filtered.map((e,i)=>`<div class="row"><div class="row-av" style="background:var(--blue-lt);color:var(--blue)">${initials(e.name)}</div><div style="flex:1"><div class="row-name">${e.name} <span style="font-size:11px;color:var(--muted)">(${e.id})</span></div><div class="row-sub">${e.role} · ${e.dept}</div></div><span class="badge badge-info">${e.type}</span><span class="badge ${e.status==='Active'?'badge-appr':'badge-pend'}" style="margin-left:6px">${e.status}</span><button class="btn btn-sm btn-danger" style="margin-left:10px" onclick="removeEmployee(${i})">Remove</button></div>`).join('') || '<div class="callout callout-amber">No employees matched your filters.</div>';
+}
+function addEmployee(){
+  const id = document.getElementById('emp-id')?.value.trim();
+  const name = document.getElementById('emp-name')?.value.trim();
+  const role = document.getElementById('emp-role')?.value.trim();
+  const dept = document.getElementById('emp-dept')?.value;
+  const type = document.getElementById('emp-type')?.value;
+  const status = document.getElementById('emp-status')?.value;
+  if(!id || !name || !role){ alert('Please fill employee ID, full name, and role.'); return; }
+  const list = getEmployees();
+  if(list.some(e=>e.id.toLowerCase()===id.toLowerCase())){ alert('Employee ID already exists.'); return; }
+  list.push({id,name,role,dept,type,status});
+  saveEmployees(list);
+  ['emp-id','emp-name','emp-role'].forEach(k=>document.getElementById(k).value='');
+  renderEmployees();
+}
+function removeEmployee(index){
+  const list = getEmployees();
+  list.splice(index,1);
+  saveEmployees(list);
+  renderEmployees();
+}
+
+
+const authUsers = [
+  {email:'admin@myhrm.pro',password:'Admin123!',name:'Nadia Hassan',role:'HR Admin'},
+  {email:'employee@myhrm.pro',password:'Emp12345!',name:'Farid Iskandar',role:'Employee'}
+];
+function loginView(){
+  return `<div class="login-shell"><div class="login-card"><div class="login-hero"><div><span class="login-chip"><i class="ti ti-shield-lock"></i> Secure portal</span><div class="login-title" style="margin-top:14px">MyHRM Pro Login</div><div class="login-sub">Access payroll, claims, attendance, approvals, and employee self-service from one secure dashboard.</div></div><div class="login-list"><div><i class="ti ti-check"></i> Single-page app with persistent records</div><div><i class="ti ti-check"></i> HR Admin + Employee demo accounts</div><div><i class="ti ti-check"></i> Local browser session authentication</div></div></div><div class="login-form"><div class="card-title" style="margin-bottom:12px"><i class="ti ti-login"></i> Sign in</div><div class="form-group" style="margin-bottom:10px"><label class="form-label">Work email</label><input id="login-email" class="form-input" placeholder="admin@myhrm.pro"></div><div class="form-group" style="margin-bottom:10px"><label class="form-label">Password</label><input id="login-pass" type="password" class="form-input" placeholder="••••••••"></div><button class="btn btn-primary" style="width:100%" onclick="attemptLogin()">Login</button><div id="login-error" class="login-error"></div><div class="callout callout-blue" style="margin-top:10px;margin-bottom:0"><strong>Demo accounts</strong><br>Admin: admin@myhrm.pro / Admin123!<br>Employee: employee@myhrm.pro / Emp12345!</div></div></div></div>`;
+}
+function attemptLogin(){
+  const email=(document.getElementById('login-email')?.value||'').trim().toLowerCase();
+  const pass=document.getElementById('login-pass')?.value||'';
+  const match=authUsers.find(u=>u.email===email && u.password===pass);
+  const err=document.getElementById('login-error');
+  if(!match){ if(err) err.textContent='Invalid email or password.'; return; }
+  localStorage.setItem('myhrm_user', JSON.stringify({email:match.email,name:match.name,role:match.role}));
+  startApp();
+}
+function logout(){ localStorage.removeItem('myhrm_user'); showLogin(); }
+function showLogin(){
+  document.getElementById('app-shell').classList.add('hidden');
+  document.getElementById('login-root').innerHTML = loginView();
+}
+function startApp(){
+  const raw=localStorage.getItem('myhrm_user');
+  if(!raw){ showLogin(); return; }
+  let user; try{ user=JSON.parse(raw);}catch{ showLogin(); return; }
+  document.getElementById('login-root').innerHTML='';
+  document.getElementById('app-shell').classList.remove('hidden');
+  const av=(user.name||'NA').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+  document.getElementById('tb-user').textContent=av;
+}
+
 /* ─────────────────────────────────────────
    INIT
 ───────────────────────────────────────── */
+if(!localStorage.getItem('myhrm_employees')) saveEmployees(defaultEmployees);
 nav('dashboard', document.querySelector('.sb-item.active'));
+startApp();
 </script>
 </body>
 </html>
