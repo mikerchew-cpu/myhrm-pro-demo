@@ -747,12 +747,34 @@ levy: () => `
 
 /* ── STUB VIEWS ─────────────────────────── */
 employees: () => `
-<div class="callout callout-blue mb14"><i class="ti ti-info-circle" aria-hidden="true"></i> Employee directory — 142 active staff across 7 departments. Click any employee to view full profile, statutory IDs, leave balance, OT history, and claims.</div>
-<div class="card">
-  <div class="card-hdr"><span class="card-title"><i class="ti ti-users" aria-hidden="true"></i> All employees</span><div style="display:flex;gap:8px"><input class="form-input" style="width:180px" placeholder="Search name or ID..."><select class="form-input" style="width:140px"><option>All departments</option><option>Field Services</option><option>Sales</option><option>Admin</option></select><button class="btn btn-primary btn-sm"><i class="ti ti-plus" aria-hidden="true"></i> New employee</button></div></div>
-  ${[['FH','#9FE1CB','#085041','Faizal Hashim','Field Tech','Field Services','Permanent','Active'],['JT','#B5D4F4','#0C447C','Jason Tan','Service Engineer','Tech Support','Permanent','Active'],['NZ','#EEEDFE','#3C3489','Nurul Zahira','CS Specialist','Cust. Success','Permanent','Active'],['RA','#C0DD97','#27500A','Rashid Abdullah','Field Tech','Field Services','Contract','Active'],['RK','#F4C0D1','#72243E','Ramu a/l Krishnan','Support Exec','Tech Support','EP Cat III','Active']].map(([av,bg,tc,name,role,dept,type,status])=>`
-  <div class="row"><div class="row-av" style="background:${bg};color:${tc}">${av}</div><div style="flex:1"><div class="row-name">${name}</div><div class="row-sub">${role} · ${dept}</div></div><span class="badge badge-info">${type}</span><span class="badge badge-appr" style="margin-left:6px">${status}</span><button class="btn btn-sm" style="margin-left:10px">View</button></div>`).join('')}
-  <div style="text-align:center;padding:12px;font-size:12px;color:var(--muted)">Showing 5 of 142 employees · <a href="#" style="color:var(--blue)">View all</a></div>
+<div class="callout callout-blue mb14"><i class="ti ti-info-circle" aria-hidden="true"></i> Employee directory with browser storage. Add staff, filter by department, and search by name, role, or employee ID.</div>
+<div class="g2">
+  <div class="card">
+    <div class="card-hdr"><span class="card-title"><i class="ti ti-plus" aria-hidden="true"></i> New employee</span></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Employee ID</label><input id="emp-id" class="form-input" placeholder="E143"></div>
+      <div class="form-group"><label class="form-label">Full name</label><input id="emp-name" class="form-input" placeholder="Aisyah Rahman"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Role</label><input id="emp-role" class="form-input" placeholder="HR Executive"></div>
+      <div class="form-group"><label class="form-label">Department</label><select id="emp-dept" class="form-input"><option>HR</option><option>Field Services</option><option>Tech Support</option><option>Finance</option><option>Sales</option><option>Admin</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Employment type</label><select id="emp-type" class="form-input"><option>Permanent</option><option>Contract</option><option>EP Cat III</option><option>Intern</option></select></div>
+      <div class="form-group"><label class="form-label">Status</label><select id="emp-status" class="form-input"><option>Active</option><option>On Leave</option><option>Probation</option></select></div>
+    </div>
+    <button class="btn btn-primary" onclick="addEmployee()" style="width:100%"><i class="ti ti-device-floppy"></i> Save employee</button>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><span class="card-title"><i class="ti ti-filter" aria-hidden="true"></i> Search & filter</span></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Search</label><input id="emp-search" class="form-input" placeholder="Name, ID, role..." oninput="renderEmployees()"></div>
+    <div class="form-group"><label class="form-label">Department</label><select id="emp-filter-dept" class="form-input" onchange="renderEmployees()"><option value="All">All departments</option><option>HR</option><option>Field Services</option><option>Tech Support</option><option>Finance</option><option>Sales</option><option>Admin</option></select></div>
+    <div class="callout callout-teal" style="margin-top:12px;margin-bottom:0"><i class="ti ti-database"></i> Data is saved in localStorage, so this behaves like a simple web app even after refresh.</div>
+  </div>
+</div>
+<div class="card" style="margin-top:14px">
+  <div class="card-hdr"><span class="card-title"><i class="ti ti-users" aria-hidden="true"></i> Employee roster</span><span id="emp-count" class="badge badge-info">0 employees</span></div>
+  <div id="emp-list"></div>
 </div>`,
 
 payroll: () => `
@@ -787,6 +809,7 @@ function nav(id, el) {
   if(id==='overtime') setTimeout(calcOT,50);
   if(id==='claims') setTimeout(calcClaim,50);
   if(id==='levy') setTimeout(calcLevy,50);
+  if(id==='employees') setTimeout(renderEmployees,50);
 }
 
 /* ─────────────────────────────────────────
@@ -843,9 +866,55 @@ function rejectRow(i) {
   if(last) last.innerHTML='<span class="badge badge-reje"><i class="ti ti-x"></i> Rejected</span>';
 }
 
+
+const defaultEmployees = [
+  {id:'E138',name:'Faizal Hashim',role:'Field Tech',dept:'Field Services',type:'Permanent',status:'Active'},
+  {id:'E139',name:'Jason Tan',role:'Service Engineer',dept:'Tech Support',type:'Permanent',status:'Active'},
+  {id:'E140',name:'Nurul Zahira',role:'CS Specialist',dept:'Sales',type:'Permanent',status:'Active'},
+  {id:'E141',name:'Rashid Abdullah',role:'Field Tech',dept:'Field Services',type:'Contract',status:'Active'},
+  {id:'E142',name:'Ramu a/l Krishnan',role:'Support Exec',dept:'Tech Support',type:'EP Cat III',status:'Probation'}
+];
+function getEmployees(){
+  try { return JSON.parse(localStorage.getItem('myhrm_employees')) || [...defaultEmployees]; }
+  catch { return [...defaultEmployees]; }
+}
+function saveEmployees(list){ localStorage.setItem('myhrm_employees', JSON.stringify(list)); }
+function initials(name){ return name.split(/\s+/).slice(0,2).map(v=>v[0]||'').join('').toUpperCase(); }
+function renderEmployees(){
+  const listEl = document.getElementById('emp-list');
+  if(!listEl) return;
+  const q = (document.getElementById('emp-search')?.value||'').toLowerCase();
+  const dept = document.getElementById('emp-filter-dept')?.value || 'All';
+  const filtered = getEmployees().filter(e => (dept==='All' || e.dept===dept) && `${e.id} ${e.name} ${e.role}`.toLowerCase().includes(q));
+  document.getElementById('emp-count').textContent = `${filtered.length} employees`;
+  listEl.innerHTML = filtered.map((e,i)=>`<div class="row"><div class="row-av" style="background:var(--blue-lt);color:var(--blue)">${initials(e.name)}</div><div style="flex:1"><div class="row-name">${e.name} <span style="font-size:11px;color:var(--muted)">(${e.id})</span></div><div class="row-sub">${e.role} · ${e.dept}</div></div><span class="badge badge-info">${e.type}</span><span class="badge ${e.status==='Active'?'badge-appr':'badge-pend'}" style="margin-left:6px">${e.status}</span><button class="btn btn-sm btn-danger" style="margin-left:10px" onclick="removeEmployee(${i})">Remove</button></div>`).join('') || '<div class="callout callout-amber">No employees matched your filters.</div>';
+}
+function addEmployee(){
+  const id = document.getElementById('emp-id')?.value.trim();
+  const name = document.getElementById('emp-name')?.value.trim();
+  const role = document.getElementById('emp-role')?.value.trim();
+  const dept = document.getElementById('emp-dept')?.value;
+  const type = document.getElementById('emp-type')?.value;
+  const status = document.getElementById('emp-status')?.value;
+  if(!id || !name || !role){ alert('Please fill employee ID, full name, and role.'); return; }
+  const list = getEmployees();
+  if(list.some(e=>e.id.toLowerCase()===id.toLowerCase())){ alert('Employee ID already exists.'); return; }
+  list.push({id,name,role,dept,type,status});
+  saveEmployees(list);
+  ['emp-id','emp-name','emp-role'].forEach(k=>document.getElementById(k).value='');
+  renderEmployees();
+}
+function removeEmployee(index){
+  const list = getEmployees();
+  list.splice(index,1);
+  saveEmployees(list);
+  renderEmployees();
+}
+
 /* ─────────────────────────────────────────
    INIT
 ───────────────────────────────────────── */
+if(!localStorage.getItem('myhrm_employees')) saveEmployees(defaultEmployees);
 nav('dashboard', document.querySelector('.sb-item.active'));
 </script>
 </body>
