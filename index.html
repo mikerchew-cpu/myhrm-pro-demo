@@ -378,15 +378,15 @@ dashboard: () => `
   </div>
 </div>
 <div class="card">
-  <div class="card-hdr"><span class="card-title" style="color:var(--teal)"><i class="ti ti-brain" aria-hidden="true"></i> DeepSeek AI insights</span><span class="badge badge-te">Live</span></div>
+  <div class="card-hdr"><span class="card-title" style="color:var(--teal)"><i class="ti ti-brain" aria-hidden="true"></i> DeepSeek AI insights</span><span class="badge badge-te">API Ready</span></div>
   <div class="ai-chips">
-    <span class="ai-chip"><i class="ti ti-chart-bar" aria-hidden="true"></i> Analyse OT trends</span>
-    <span class="ai-chip"><i class="ti ti-receipt" aria-hidden="true"></i> Summarise pending claims</span>
-    <span class="ai-chip"><i class="ti ti-calendar" aria-hidden="true"></i> Leave balance alert</span>
-    <span class="ai-chip"><i class="ti ti-file-analytics" aria-hidden="true"></i> Payroll variance report</span>
-    <span class="ai-chip"><i class="ti ti-car" aria-hidden="true"></i> Flag high mileage claims</span>
-    <span class="ai-chip"><i class="ti ti-checklist" aria-hidden="true"></i> Compliance checklist</span>
+    <button class="ai-chip" onclick="setAiPrompt('Analyse OT trends and identify top 3 departments by overtime cost.')"><i class="ti ti-chart-bar" aria-hidden="true"></i> Analyse OT trends</button>
+    <button class="ai-chip" onclick="setAiPrompt('Summarise pending claims and recommend approval priority.')"><i class="ti ti-receipt" aria-hidden="true"></i> Summarise pending claims</button>
+    <button class="ai-chip" onclick="setAiPrompt('Generate leave balance risk alert for this month.')"><i class="ti ti-calendar" aria-hidden="true"></i> Leave balance alert</button>
   </div>
+  <div class="form-group" style="margin-top:10px"><label class="form-label">Prompt</label><textarea id="ai-prompt" class="form-input" rows="3" placeholder="Ask DeepSeek to analyse HR data..."></textarea></div>
+  <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-teal" onclick="runDeepSeek()"><i class="ti ti-player-play"></i> Run DeepSeek</button><button class="btn" onclick="saveDeepSeekKey()">Set API Key</button></div>
+  <div id="ai-result" class="callout callout-blue" style="margin-top:10px;margin-bottom:0">Add your DeepSeek API key once (saved in browser) and run prompts here.</div>
 </div>`,
 
 /* ── CLAIMS ─────────────────────────────── */
@@ -983,6 +983,31 @@ function addAdminStaff(){
   renderAdminStaff();
 }
 function removeAdminStaff(i){ const list=getAdminStaff(); list.splice(i,1); saveAdminStaff(list); renderAdminStaff(); }
+
+
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
+function saveDeepSeekKey(){
+  const key = prompt('Paste DeepSeek API key (stored in this browser):');
+  if(!key) return;
+  localStorage.setItem('deepseek_api_key', key.trim());
+  alert('DeepSeek API key saved.');
+}
+function setAiPrompt(text){ const el=document.getElementById('ai-prompt'); if(el) el.value=text; }
+async function runDeepSeek(){
+  const out=document.getElementById('ai-result');
+  const promptText=(document.getElementById('ai-prompt')?.value||'').trim();
+  const apiKey=localStorage.getItem('deepseek_api_key');
+  if(!promptText){ if(out) out.textContent='Please enter a prompt.'; return; }
+  if(!apiKey){ if(out) out.textContent='No API key found. Click "Set API Key" first.'; return; }
+  if(out) out.textContent='Running DeepSeek request...';
+  try{
+    const res=await fetch(DEEPSEEK_API_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:'You are an HR analytics assistant.'},{role:'user',content:promptText}],temperature:0.3})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data?.error?.message || 'DeepSeek API error');
+    const text=data?.choices?.[0]?.message?.content || 'No response content.';
+    if(out) out.textContent=text;
+  }catch(err){ if(out) out.textContent=`DeepSeek error: ${err.message}`; }
+}
 
 const authUsers = [
   {email:'admin@myhrm.pro',password:'Admin123!',name:'Nadia Hassan',role:'HR Admin'},
