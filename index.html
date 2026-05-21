@@ -796,40 +796,24 @@ employees: () => `
 
 
 hradmin: () => `
-<div class="callout callout-teal mb14"><i class="ti ti-settings" aria-hidden="true"></i> HR Admin module centralizes users, roles, module access, and audit actions for MyHRM Pro.</div>
-<div class="g4 mb14">
-  <div class="metric"><div class="metric-lbl"><i class="ti ti-users-group"></i> Active admin users</div><div class="metric-val">12</div><div class="metric-sub">2 super admins · 10 managers</div></div>
-  <div class="metric"><div class="metric-lbl"><i class="ti ti-shield-lock"></i> MFA coverage</div><div class="metric-val" style="color:var(--green)">100%</div><div class="metric-sub">All admin accounts</div></div>
-  <div class="metric"><div class="metric-lbl"><i class="ti ti-key"></i> Pending access requests</div><div class="metric-val" style="color:var(--amber)">4</div><div class="metric-sub">Awaiting approval</div></div>
-  <div class="metric"><div class="metric-lbl"><i class="ti ti-clipboard-list"></i> Audit events (7d)</div><div class="metric-val">86</div><div class="metric-sub">0 critical anomalies</div></div>
-</div>
+<div class="callout callout-teal mb14"><i class="ti ti-settings" aria-hidden="true"></i> HR Admin module: create staff access profiles by department, level, view scope, app functions, and approval rights.</div>
 <div class="g2">
   <div class="card">
-    <div class="card-hdr"><span class="card-title"><i class="ti ti-user-cog"></i> Admin users</span><button class="btn btn-sm btn-primary">+ Add admin</button></div>
-    ${[['Nadia Hassan','HR Admin','Super Admin','Active'],['Ahmad Hafiz','HR Manager','Payroll + Employee','Active'],['Mei Ling','Finance Manager','Payroll Approver','Active'],['Jason Tan','Support Lead','Read-only Ops','Suspended']].map(([name,title,role,status])=>`
-    <div class="row"><div class="row-av" style="background:var(--blue-lt);color:var(--blue)">${name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div style="flex:1"><div class="row-name">${name}</div><div class="row-sub">${title} · ${role}</div></div><span class="badge ${status==='Active'?'badge-appr':'badge-pend'}">${status}</span><button class="btn btn-sm" style="margin-left:10px">Edit</button></div>`).join('')}
+    <div class="card-hdr"><span class="card-title"><i class="ti ti-user-plus"></i> Add staff access</span></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Staff name</label><input id="adm-name" class="form-input" placeholder="Farah Binti Salleh"></div><div class="form-group"><label class="form-label">Email</label><input id="adm-email" class="form-input" placeholder="farah@myhrm.pro"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Department</label><select id="adm-dept" class="form-input"><option>HR</option><option>Finance</option><option>Operations</option><option>Tech Support</option><option>Sales</option></select></div><div class="form-group"><label class="form-label">Level</label><select id="adm-level" class="form-input"><option>Executive</option><option>Manager</option><option>Senior Manager</option><option>Director</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">View scope</label><select id="adm-view" class="form-input"><option>Own records</option><option>Department records</option><option>All company records</option></select></div><div class="form-group"><label class="form-label">Approval right</label><select id="adm-approval" class="form-input"><option>None</option><option>Level 1 approver</option><option>Level 2 approver</option><option>Final approver</option></select></div></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">App functions</label><select id="adm-func" class="form-input"><option>Employee + Leave</option><option>Payroll + Claims</option><option>Approvals + Matrix</option><option>Full HR Admin</option></select></div>
+    <button class="btn btn-primary" style="width:100%" onclick="addAdminStaff()"><i class="ti ti-device-floppy"></i> Save access profile</button>
   </div>
   <div class="card">
-    <div class="card-hdr"><span class="card-title"><i class="ti ti-lock-access"></i> Role access matrix</span></div>
-    <table class="matrix-table">
-      <thead><tr><th>Module</th><th>Super Admin</th><th>HR Manager</th><th>Employee</th></tr></thead>
-      <tbody>
-        <tr><td>Employees</td><td class="ck">✓</td><td class="ck">✓</td><td>View own</td></tr>
-        <tr><td>Payroll</td><td class="ck">✓</td><td class="ck">✓</td><td>View payslip</td></tr>
-        <tr><td>Claims</td><td class="ck">✓</td><td class="ck">✓</td><td>Create only</td></tr>
-        <tr><td>Approvals</td><td class="ck">✓</td><td class="ck">✓</td><td>—</td></tr>
-        <tr><td>HR Admin</td><td class="ck">✓</td><td>Limited</td><td>—</td></tr>
-      </tbody>
-    </table>
-    <div style="margin-top:10px;display:flex;gap:8px"><button class="btn btn-sm">Export policy</button><button class="btn btn-sm btn-teal">Run access review</button></div>
+    <div class="card-hdr"><span class="card-title"><i class="ti ti-filter"></i> Filter admin list</span></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Search</label><input id="adm-search" class="form-input" placeholder="Name, email, department..." oninput="renderAdminStaff()"></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Department</label><select id="adm-filter-dept" class="form-input" onchange="renderAdminStaff()"><option value="All">All departments</option><option>HR</option><option>Finance</option><option>Operations</option><option>Tech Support</option><option>Sales</option></select></div><div class="form-group"><label class="form-label">Approval level</label><select id="adm-filter-appr" class="form-input" onchange="renderAdminStaff()"><option value="All">All rights</option><option>None</option><option>Level 1 approver</option><option>Level 2 approver</option><option>Final approver</option></select></div></div>
+    <div class="callout callout-blue" style="margin-bottom:0"><i class="ti ti-shield-check"></i> Access controls are stored in browser localStorage for fast demo setup.</div>
   </div>
 </div>
-<div class="card" style="margin-top:14px">
-  <div class="card-hdr"><span class="card-title"><i class="ti ti-history"></i> Recent admin audit trail</span><span class="badge badge-info">Last 24 hours</span></div>
-  <div class="row"><div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div><div style="flex:1"><div class="row-name">Role updated: Payroll Approver</div><div class="row-sub">By Nadia Hassan · 09:12</div></div><span class="badge badge-appr">Success</span></div>
-  <div class="row"><div style="width:8px;height:8px;border-radius:50%;background:var(--amber)"></div><div style="flex:1"><div class="row-name">Failed login attempt blocked</div><div class="row-sub">employee@myhrm.pro · 08:03</div></div><span class="badge badge-pend">Blocked</span></div>
-  <div class="row"><div style="width:8px;height:8px;border-radius:50%;background:var(--blue)"></div><div style="flex:1"><div class="row-name">New admin invited</div><div class="row-sub">farah.hr@myhrm.pro · 07:41</div></div><span class="badge badge-info">Pending</span></div>
-</div>`,
+<div class="card" style="margin-top:14px"><div class="card-hdr"><span class="card-title"><i class="ti ti-users-group"></i> Admin staff directory</span><span id="adm-count" class="badge badge-info">0 staff</span></div><div id="adm-list"></div></div>`,
 
 payroll: () => `
 <div class="callout callout-green mb14"><i class="ti ti-check" aria-hidden="true"></i> May 2026 payroll ready for review. EPF, SOCSO, EIS, and PCB computed. Pending approval from Finance Director (L4) before processing.</div>
@@ -864,6 +848,7 @@ function nav(id, el) {
   if(id==='claims') setTimeout(calcClaim,50);
   if(id==='levy') setTimeout(calcLevy,50);
   if(id==='employees') setTimeout(renderEmployees,50);
+  if(id==='hradmin') setTimeout(renderAdminStaff,50);
 }
 
 /* ─────────────────────────────────────────
@@ -966,6 +951,39 @@ function removeEmployee(index){
 }
 
 
+
+const defaultAdminStaff = [
+  {name:'Nadia Hassan',email:'admin@myhrm.pro',dept:'HR',level:'Director',view:'All company records',func:'Full HR Admin',approval:'Final approver'},
+  {name:'Ahmad Hafiz',email:'ahmad.hafiz@myhrm.pro',dept:'HR',level:'Manager',view:'Department records',func:'Employee + Leave',approval:'Level 2 approver'},
+  {name:'Mei Ling',email:'mei.ling@myhrm.pro',dept:'Finance',level:'Senior Manager',view:'Department records',func:'Payroll + Claims',approval:'Level 1 approver'}
+];
+function getAdminStaff(){ try { return JSON.parse(localStorage.getItem('myhrm_admin_staff')) || [...defaultAdminStaff]; } catch { return [...defaultAdminStaff]; } }
+function saveAdminStaff(list){ localStorage.setItem('myhrm_admin_staff', JSON.stringify(list)); }
+function renderAdminStaff(){
+  const box=document.getElementById('adm-list'); if(!box) return;
+  const q=(document.getElementById('adm-search')?.value||'').toLowerCase();
+  const d=document.getElementById('adm-filter-dept')?.value||'All';
+  const a=document.getElementById('adm-filter-appr')?.value||'All';
+  const filtered=getAdminStaff().filter(x=>(d==='All'||x.dept===d)&&(a==='All'||x.approval===a)&&(`${x.name} ${x.email} ${x.dept} ${x.level}`.toLowerCase().includes(q)));
+  document.getElementById('adm-count').textContent=`${filtered.length} staff`;
+  box.innerHTML=filtered.map((x,i)=>`<div class="row"><div class="row-av" style="background:var(--purple-lt);color:var(--purple)">${initials(x.name)}</div><div style="flex:1"><div class="row-name">${x.name}</div><div class="row-sub">${x.email} · ${x.dept} · ${x.level}</div><div class="chain"><span class="chain-badge chain-active">${x.view}</span><span class="chain-badge chain-wait">${x.func}</span><span class="chain-badge chain-done">${x.approval}</span></div></div><button class="btn btn-sm btn-danger" onclick="removeAdminStaff(${i})">Remove</button></div>`).join('') || '<div class="callout callout-amber">No staff matched current filters.</div>';
+}
+function addAdminStaff(){
+  const name=document.getElementById('adm-name')?.value.trim();
+  const email=(document.getElementById('adm-email')?.value||'').trim().toLowerCase();
+  const dept=document.getElementById('adm-dept')?.value;
+  const level=document.getElementById('adm-level')?.value;
+  const view=document.getElementById('adm-view')?.value;
+  const func=document.getElementById('adm-func')?.value;
+  const approval=document.getElementById('adm-approval')?.value;
+  if(!name||!email){ alert('Please fill staff name and email.'); return; }
+  const list=getAdminStaff(); if(list.some(x=>x.email===email)){ alert('Email already exists.'); return; }
+  list.push({name,email,dept,level,view,func,approval}); saveAdminStaff(list);
+  ['adm-name','adm-email'].forEach(k=>document.getElementById(k).value='');
+  renderAdminStaff();
+}
+function removeAdminStaff(i){ const list=getAdminStaff(); list.splice(i,1); saveAdminStaff(list); renderAdminStaff(); }
+
 const authUsers = [
   {email:'admin@myhrm.pro',password:'Admin123!',name:'Nadia Hassan',role:'HR Admin'},
   {email:'employee@myhrm.pro',password:'Emp12345!',name:'Farid Iskandar',role:'Employee'}
@@ -1001,6 +1019,7 @@ function startApp(){
    INIT
 ───────────────────────────────────────── */
 if(!localStorage.getItem('myhrm_employees')) saveEmployees(defaultEmployees);
+if(!localStorage.getItem('myhrm_admin_staff')) saveAdminStaff(defaultAdminStaff);
 nav('dashboard', document.querySelector('.sb-item.active'));
 startApp();
 </script>
